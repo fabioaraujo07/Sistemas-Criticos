@@ -1,0 +1,18 @@
+node 1: sql1
+node 2: sql2
+primitive p_mariadb mysql \
+	params config="/etc/mysql/mariadb.conf.d/50-server.cnf" datadir="/cluster/sql" user=mysql \
+	op monitor interval=20s timeout=30s
+primitive p_vip IPaddr2 \
+	params ip=192.168.19.110 cidr_netmask=24 \
+	op monitor interval=10s
+location cli-prefer-p_mariadb p_mariadb role=Started inf: sql1
+colocation col_mysql_with_vip inf: p_mariadb p_vip
+order o_mysql_after_vip inf: p_vip p_mariadb
+property cib-bootstrap-options: \
+	have-watchdog=false \
+	dc-version=1.1.18-2b07d5c5a9 \
+	cluster-infrastructure=corosync \
+	cluster-name=debian \
+	stonith-enabled=false \
+	no-quorum-policy=ignore
